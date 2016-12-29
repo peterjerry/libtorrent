@@ -255,7 +255,7 @@ namespace aux {
 			explicit session_impl(io_service& ios);
 			virtual ~session_impl();
 
-			void start_session(settings_pack pack);
+			void start_session(settings_pack pack, disk_io_constructor_type disk_io);
 
 			void init_peer_class_filter(bool unlimited_local);
 
@@ -583,7 +583,7 @@ namespace aux {
 			}
 
 			alert_manager& alerts() override { return m_alerts; }
-			disk_interface& disk_thread() override { return m_disk_thread; }
+			disk_interface& disk_thread() override { return *m_disk_thread; }
 
 			void abort();
 			void abort_stage2();
@@ -823,7 +823,7 @@ namespace aux {
 			// m_files. The disk io thread posts completion
 			// events to the io service, and needs to be
 			// constructed after it.
-			disk_io_thread m_disk_thread;
+			std::unique_ptr<disk_interface> m_disk_thread;
 
 			// the bandwidth manager is responsible for
 			// handing out bandwidth to connections that

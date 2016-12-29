@@ -467,8 +467,7 @@ void test_check_files(std::string const& test_path
 	p.path = test_path;
 	p.mode = storage_mode;
 
-	auto st = io.new_torrent(default_storage_constructor, std::move(p)
-		, std::shared_ptr<void>());
+	auto st = io.new_torrent(std::move(p), std::shared_ptr<void>());
 	std::mutex lock;
 
 	bool done = false;

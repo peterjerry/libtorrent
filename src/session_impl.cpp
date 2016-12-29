@@ -461,7 +461,6 @@ namespace aux {
 		, m_ssl_ctx(m_io_service, boost::asio::ssl::context::sslv23)
 #endif
 		, m_alerts(m_settings.get_int(settings_pack::alert_queue_size), alert::all_categories)
-		, m_disk_thread(m_io_service, m_stats_counters)
 		, m_download_rate(peer_connection::download_channel)
 		, m_upload_rate(peer_connection::upload_channel)
 		, m_host_resolver(m_io_service)
@@ -533,8 +532,13 @@ namespace aux {
 	// io_service thread.
 	// TODO: 2 is there a reason not to move all of this into init()? and just
 	// post it to the io_service?
-	void session_impl::start_session(settings_pack pack)
+	void session_impl::start_session(settings_pack pack
+		, disk_io_constructor_type disk_io_constructor)
 	{
+		m_disk_thread = disk_io_constructor
+			? disk_io_constructor(m_io_service, m_stats_counters)
+			: std::unique_ptr<disk_interface>(new disk_io_thread(m_io_service, m_stats_counters));
+
 		if (pack.has_val(settings_pack::alert_mask))
 		{
 			m_alerts.set_alert_mask(std::uint32_t(pack.get_int(settings_pack::alert_mask)));
@@ -1044,7 +1048,7 @@ namespace aux {
 		// it's OK to detach the threads here. The disk_io_thread
 		// has an internal counter and won't release the network
 		// thread until they're all dead (via m_work).
-		m_disk_thread.abort(false);
+		m_disk_thread->abort(false);
 
 		// now it's OK for the network thread to exit
 		m_work.reset();
@@ -1316,7 +1320,7 @@ namespace {
 	{
 		TORRENT_ASSERT(m_deferred_submit_disk_jobs);
 		m_deferred_submit_disk_jobs = false;
-		m_disk_thread.submit_jobs();
+		m_disk_thread->submit_jobs();
 	}
 
 	// copies pointers to bandwidth channels from the peer classes
@@ -1423,7 +1427,7 @@ namespace {
 #endif
 
 		apply_pack(&pack, m_settings, this);
-		m_disk_thread.set_settings(&pack);
+		m_disk_thread->set_settings(&pack);
 
 		if (init && !reopen_listen_port)
 		{
@@ -2954,7 +2958,7 @@ namespace {
 		pack.ses = this;
 		pack.sett = &m_settings;
 		pack.stats_counters = &m_stats_counters;
-		pack.disk_thread = &m_disk_thread;
+		pack.disk_thread = m_disk_thread.get();
 		pack.ios = &m_io_service;
 		pack.tor = std::weak_ptr<torrent>();
 		pack.s = s;
@@ -4638,7 +4642,7 @@ namespace {
 
 	void session_impl::post_session_stats()
 	{
-		m_disk_thread.update_stats_counters(m_stats_counters);
+		m_disk_thread->update_stats_counters(m_stats_counters);
 
 #ifndef TORRENT_DISABLE_DHT
 		if (m_dht)
@@ -5637,7 +5641,7 @@ namespace {
 			else
 				flags = session::disk_cache_no_pieces;
 		}
-		m_disk_thread.get_cache_info(ret, st
+		m_disk_thread->get_cache_info(ret, st
 			, flags & session::disk_cache_no_pieces, whole_session);
 	}
 

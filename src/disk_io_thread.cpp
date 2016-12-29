@@ -183,6 +183,13 @@ namespace libtorrent {
 	scoped_unlocker_impl<Lock> scoped_unlock(Lock& l)
 	{ return scoped_unlocker_impl<Lock>(l); }
 
+	storage_index_t pop(std::vector<storage_index_t>& q)
+	{
+		TORRENT_ASSERT(!q.empty());
+		storage_index_t const ret = q.back();
+		q.pop_back();
+		return ret;
+	}
 	} // anonymous namespace
 
 // ------- disk_io_thread ------
@@ -202,38 +209,23 @@ namespace libtorrent {
 		m_disk_cache.set_settings(m_settings);
 	}
 
-	storage_interface* disk_io_thread::get_torrent(storage_index_t const storage)
-	{
-		TORRENT_ASSERT(m_magic == 0x1337);
-		return m_torrents[storage].get();
-	}
-
 	std::vector<open_file_state> disk_io_thread::get_status(storage_index_t const st) const
 	{
 		return m_file_pool.get_status(st);
 	}
 
-	storage_holder disk_io_thread::new_torrent(storage_constructor_type sc
-		, storage_params p, std::shared_ptr<void> const& owner)
+	storage_holder disk_io_thread::new_torrent(storage_params params
+		, std::shared_ptr<void> const& owner)
 	{
-		std::unique_ptr<storage_interface> storage(sc(p, m_file_pool));
+		storage_index_t const idx = m_free_slots.empty()
+			? m_torrents.end_index()
+			: pop(m_free_slots);
+		auto storage = std::make_shared<default_storage>(std::move(params), m_file_pool);
+		storage->set_storage_index(idx);
 		storage->set_owner(owner);
-
-		TORRENT_ASSERT(storage);
-		if (m_free_slots.empty())
-		{
-			storage_index_t const idx = m_torrents.end_index();
-			m_torrents.emplace_back(std::move(storage));
-			m_torrents.back()->set_storage_index(idx);
-			return storage_holder(idx, *this);
-		}
-		else
-		{
-			storage_index_t const idx = m_free_slots.back();
-			m_free_slots.pop_back();
-			(m_torrents[idx] = std::move(storage))->set_storage_index(idx);
-			return storage_holder(idx, *this);
-		}
+		if (idx == m_torrents.end_index()) m_torrents.emplace_back(std::move(storage));
+		else m_torrents[idx] = std::move(storage);
+		return storage_holder(idx, *this);
 	}
 
 	void disk_io_thread::remove_torrent(storage_index_t const idx)

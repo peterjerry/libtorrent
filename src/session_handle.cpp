@@ -368,9 +368,9 @@ namespace {
 		, entry const& resume_data
 		, storage_mode_t storage_mode
 		, bool paused
-		, storage_constructor_type sc)
+		, storage_constructor_type)
 	{
-		add_torrent_params p(sc);
+		add_torrent_params p;
 		p.ti = std::make_shared<torrent_info>(ti);
 		p.save_path = save_path;
 		if (resume_data.type() != entry::undefined_t)
@@ -391,12 +391,12 @@ namespace {
 		, entry const& resume_data
 		, storage_mode_t storage_mode
 		, bool paused
-		, storage_constructor_type sc
+		, storage_constructor_type
 		, void* userdata)
 	{
 		TORRENT_ASSERT_PRECOND(!save_path.empty());
 
-		add_torrent_params p(sc);
+		add_torrent_params p;
 		p.trackers.push_back(tracker_url);
 		p.info_hash = info_hash;
 		p.save_path = save_path;

@@ -287,19 +287,18 @@ namespace aux {
 		disk_io_thread(io_service& ios
 			, counters& cnt
 			, int block_size = 16 * 1024);
-		~disk_io_thread();
+		~disk_io_thread() override;
 
-		void set_settings(settings_pack const* sett);
-
-		void abort(bool wait);
-
-		storage_holder new_torrent(storage_constructor_type sc
-			, storage_params p, std::shared_ptr<void> const&) override;
+		void set_settings(settings_pack const* sett) override;
+		storage_holder new_torrent(storage_params params
+			, std::shared_ptr<void> const& torrent) override;
 		void remove_torrent(storage_index_t) override;
 
+		void abort(bool wait) override;
+
 		void async_read(storage_index_t storage, peer_request const& r
-			, std::function<void(disk_buffer_holder block
-				, std::uint32_t flags, storage_error const& se)> handler, void* requester, std::uint8_t flags = 0) override;
+			, std::function<void(disk_buffer_holder block, std::uint32_t flags, storage_error const& se)> handler
+			, void* requester, std::uint8_t flags = 0) override;
 		bool async_write(storage_index_t storage, peer_request const& r
 			, char const* buf, std::shared_ptr<disk_observer> o
 			, std::function<void(storage_error const&)> handler
@@ -338,16 +337,16 @@ namespace aux {
 		// implements buffer_allocator_interface
 		void reclaim_blocks(span<aux::block_cache_reference> ref) override;
 		void free_disk_buffer(char* buf) override { m_disk_cache.free_buffer(buf); }
+
 		void trigger_cache_trim();
 		void update_stats_counters(counters& c) const override;
 		void get_cache_info(cache_status* ret, storage_index_t storage
 			, bool no_pieces, bool session) const override;
-		storage_interface* get_torrent(storage_index_t) override;
 
 		std::vector<open_file_state> get_status(storage_index_t) const override;
 
 		// this submits all queued up jobs to the thread
-		void submit_jobs();
+		void submit_jobs() override;
 
 		block_cache* cache() { return &m_disk_cache; }
 

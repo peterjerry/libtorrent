@@ -321,7 +321,7 @@ namespace libtorrent {
 		m_impl->set_dht_storage(params.dht_storage_constructor);
 #endif
 
-		m_impl->start_session(std::move(params.settings));
+		m_impl->start_session(std::move(params.settings), std::move(params.disk_io_constructor));
 
 		if (internal_executor)
 		{

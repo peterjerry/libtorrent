@@ -131,10 +131,10 @@ namespace libtorrent {
 			volatile_read = 0x10,
 		};
 
-		virtual storage_holder new_torrent(storage_constructor_type sc
-			, storage_params p, std::shared_ptr<void> const&) = 0;
+		virtual storage_holder new_torrent(storage_params p
+			, std::shared_ptr<void> const& torrent) = 0;
+
 		virtual void remove_torrent(storage_index_t) = 0;
-		virtual storage_interface* get_torrent(storage_index_t) = 0;
 
 		virtual void async_read(storage_index_t storage, peer_request const& r
 			, std::function<void(disk_buffer_holder block, std::uint32_t flags, storage_error const& se)> handler
@@ -176,11 +176,14 @@ namespace libtorrent {
 
 		virtual std::vector<open_file_state> get_status(storage_index_t) const = 0;
 
+		virtual void abort(bool wait) = 0;
+		virtual void submit_jobs() = 0;
+		virtual void set_settings(settings_pack const* sett) = 0;
+
 #if TORRENT_USE_ASSERTS
 		virtual bool is_disk_buffer(char* buffer) const = 0;
 #endif
-	protected:
-		~disk_interface() {}
+		virtual ~disk_interface() {}
 	};
 
 	struct storage_holder

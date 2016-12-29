@@ -278,7 +278,8 @@ namespace libtorrent {
 		params.path = path;
 		params.mode = storage_mode_sparse;
 
-		storage_holder storage = disk_thread.new_torrent(default_storage_constructor, std::move(params), std::shared_ptr<void>());
+		storage_holder storage = disk_thread.new_torrent(std::move(params)
+			, std::shared_ptr<void>());
 
 		settings_pack sett;
 		sett.set_int(settings_pack::cache_size, 0);
