@@ -5626,25 +5626,6 @@ namespace {
 	}
 #endif // TORRENT_NO_DEPRECATE
 
-	void session_impl::get_cache_info(torrent_handle h, cache_status* ret, int flags) const
-	{
-		storage_index_t st{0};
-		bool whole_session = true;
-		std::shared_ptr<torrent> t = h.m_torrent.lock();
-		if (t)
-		{
-			if (t->has_storage())
-			{
-				st = t->storage();
-				whole_session = false;
-			}
-			else
-				flags = session::disk_cache_no_pieces;
-		}
-		m_disk_thread->get_cache_info(ret, st
-			, flags & session::disk_cache_no_pieces, whole_session);
-	}
-
 #ifndef TORRENT_DISABLE_DHT
 
 	void session_impl::start_dht()
@@ -6166,19 +6147,6 @@ namespace {
 	{
 		if (m_settings.get_int(settings_pack::connection_speed) < 0)
 			m_settings.set_int(settings_pack::connection_speed, 200);
-	}
-
-	void session_impl::update_queued_disk_bytes()
-	{
-		int const cache_size = m_settings.get_int(settings_pack::cache_size);
-		if (m_settings.get_int(settings_pack::max_queued_disk_bytes) / 16 / 1024
-			> cache_size / 2
-			&& cache_size > 5
-			&& m_alerts.should_post<performance_alert>())
-		{
-			m_alerts.emplace_alert<performance_alert>(torrent_handle()
-				, performance_alert::too_high_disk_queue_limit);
-		}
 	}
 
 	void session_impl::update_alert_queue_size()

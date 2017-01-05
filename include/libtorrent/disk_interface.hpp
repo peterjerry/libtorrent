@@ -168,11 +168,8 @@ namespace libtorrent {
 
 		virtual void async_clear_piece(storage_index_t storage, piece_index_t index
 			, std::function<void(piece_index_t)> handler) = 0;
-		virtual void clear_piece(storage_index_t storage, piece_index_t index) = 0;
 
 		virtual void update_stats_counters(counters& c) const = 0;
-		virtual void get_cache_info(cache_status* ret, storage_index_t storage
-			, bool no_pieces = true, bool session = true) const = 0;
 
 		virtual std::vector<open_file_state> get_status(storage_index_t) const = 0;
 
@@ -180,9 +177,6 @@ namespace libtorrent {
 		virtual void submit_jobs() = 0;
 		virtual void set_settings(settings_pack const* sett) = 0;
 
-#if TORRENT_USE_ASSERTS
-		virtual bool is_disk_buffer(char* buffer) const = 0;
-#endif
 		virtual ~disk_interface() {}
 	};
 

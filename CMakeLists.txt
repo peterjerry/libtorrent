@@ -18,7 +18,6 @@ set(sources
 	bandwidth_queue_entry
 	bdecode
 	bitfield
-	block_cache
 	bloom_filter
 	chained_buffer
 	choker
@@ -89,7 +88,6 @@ set(sources
 	stat
 	stat_cache
 	storage
-	storage_piece_set
 	storage_utils
 	time
 	timestamp_history

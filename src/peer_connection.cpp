@@ -2823,7 +2823,6 @@ namespace libtorrent {
 			settings_pack::max_queued_disk_bytes);
 		if (write_queue_size > max_queue_size
 			&& write_queue_size - p.length < max_queue_size
-			&& m_settings.get_int(settings_pack::cache_size) > 5
 			&& t->alerts().should_post<performance_alert>())
 		{
 			t->alerts().emplace_alert<performance_alert>(t->get_handle()

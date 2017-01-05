@@ -442,29 +442,6 @@ namespace {
 		return sync_call_ret<session_status>(&session_impl::status);
 	}
 
-	void session_handle::get_cache_info(sha1_hash const& ih
-		, std::vector<cached_piece_info>& ret) const
-	{
-		cache_status st;
-		get_cache_info(&st, find_torrent(ih));
-		ret.swap(st.pieces);
-	}
-
-	cache_status session_handle::get_cache_status() const
-	{
-		cache_status st;
-		get_cache_info(&st);
-		return st;
-	}
-#endif
-
-	void session_handle::get_cache_info(cache_status* ret
-		, torrent_handle h, int flags) const
-	{
-		sync_call(&session_impl::get_cache_info, h, ret, flags);
-	}
-
-#ifndef TORRENT_NO_DEPRECATE
 	void session_handle::start_dht()
 	{
 		settings_pack p;

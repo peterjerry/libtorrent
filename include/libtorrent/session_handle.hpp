@@ -37,7 +37,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/entry.hpp"
 #include "libtorrent/torrent_handle.hpp"
 #include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/disk_io_thread.hpp" // for cached_piece_info
 #include "libtorrent/alert.hpp" // alert::error_notification
 #include "libtorrent/peer_class.hpp"
 #include "libtorrent/peer_class_type_filter.hpp"
@@ -304,28 +303,6 @@ namespace libtorrent {
 		TORRENT_DEPRECATED
 		session_status status() const;
 
-		// deprecated in libtorrent 1.1
-		// fills out the supplied vector with information for each piece that is
-		// currently in the disk cache for the torrent with the specified
-		// info-hash (``ih``).
-		TORRENT_DEPRECATED
-		void get_cache_info(sha1_hash const& ih
-			, std::vector<cached_piece_info>& ret) const;
-
-		// Returns status of the disk cache for this session.
-		// For more information, see the cache_status type.
-		TORRENT_DEPRECATED
-		cache_status get_cache_status() const;
-#endif
-
-		enum { disk_cache_no_pieces = 1 };
-
-		// Fills in the cache_status struct with information about the given torrent.
-		// If ``flags`` is ``session::disk_cache_no_pieces`` the ``cache_status::pieces`` field
-		// will not be set. This may significantly reduce the cost of this call.
-		void get_cache_info(cache_status* ret, torrent_handle h = torrent_handle(), int flags = 0) const;
-
-#ifndef TORRENT_NO_DEPRECATE
 		// ``start_dht`` starts the dht node and makes the trackerless service
 		// available to torrents.
 		//

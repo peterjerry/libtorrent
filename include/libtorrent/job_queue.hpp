@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2003-2016, Arvid Norberg, Daniel Wallin
+Copyright (c) 2016, Arvid Norberg
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,37 +30,32 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/aux_/storage_piece_set.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/block_cache.hpp"
-#include "libtorrent/storage.hpp" // for storage_interface
+#ifndef TORRENT_JOB_QUEUE_HPP
+#define TORRENT_JOB_QUEUE_HPP
 
 namespace libtorrent { namespace aux {
 
-	void storage_piece_set::add_piece(cached_piece_entry* p)
+	struct block_key
 	{
-		TORRENT_ASSERT(p->in_storage == false);
-		TORRENT_ASSERT(p->storage.get() == this);
-		TORRENT_ASSERT(m_cached_pieces.count(p) == 0);
-		m_cached_pieces.insert(p);
-#if TORRENT_USE_ASSERTS
-		p->in_storage = true;
+		void* torrent;
+		int block;
+	};
+
+	struct job_queue
+	{
+		// jobs queued to be serviced
+		boost::circular_buffer<disk_job> m_job_queue;
+
+		// jobs that are currently being serviced
+		std::vector<disk_job> m_pending_jobs;
+
+		// maps a block queued to be written to disk to 
+		std::unordered_map<block_key, int> m_store_buffer;
+
+		// pool of disk blocks
+		disk_block_pool m_buffers;
+	};
+}
+
 #endif
-	}
 
-	bool storage_piece_set::has_piece(cached_piece_entry const* p) const
-	{
-		return m_cached_pieces.count(const_cast<cached_piece_entry*>(p)) > 0;
-	}
-
-	void storage_piece_set::remove_piece(cached_piece_entry* p)
-	{
-		TORRENT_ASSERT(p->in_storage == true);
-		TORRENT_ASSERT(m_cached_pieces.count(p) == 1);
-		m_cached_pieces.erase(p);
-#if TORRENT_USE_ASSERTS
-		p->in_storage = false;
-#endif
-	}
-
-}}

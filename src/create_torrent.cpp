@@ -282,7 +282,6 @@ namespace libtorrent {
 			, std::shared_ptr<void>());
 
 		settings_pack sett;
-		sett.set_int(settings_pack::cache_size, 0);
 		sett.set_int(settings_pack::aio_threads, 1);
 
 		disk_thread.set_settings(&sett);

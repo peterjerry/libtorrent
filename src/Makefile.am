@@ -53,7 +53,6 @@ libtorrent_rasterbar_la_SOURCES = \
   bitfield.cpp                    \
   bloom_filter.cpp                \
   broadcast_socket.cpp            \
-  block_cache.cpp                 \
   bt_peer_connection.cpp          \
   chained_buffer.cpp              \
   choker.cpp                      \
@@ -134,7 +133,6 @@ libtorrent_rasterbar_la_SOURCES = \
   stat.cpp                        \
   stat_cache.cpp                  \
   storage.cpp                     \
-  storage_piece_set.cpp           \
   storage_utils.cpp               \
   session_stats.cpp               \
   string_util.cpp                 \

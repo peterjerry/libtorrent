@@ -717,7 +717,6 @@ namespace aux {
 			void update_user_agent();
 			void update_unchoke_limit();
 			void update_connection_speed();
-			void update_queued_disk_bytes();
 			void update_alert_queue_size();
 			void update_disk_threads();
 			void update_cache_buffer_chunk_size();

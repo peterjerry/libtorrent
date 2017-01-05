@@ -36,7 +36,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/error_code.hpp"
 #include "libtorrent/tailqueue.hpp"
 #include "libtorrent/peer_request.hpp"
-#include "libtorrent/aux_/block_cache_reference.hpp"
 #include "libtorrent/sha1_hash.hpp"
 #include "libtorrent/disk_interface.hpp"
 #include "libtorrent/aux_/vector.hpp"
@@ -119,7 +118,7 @@ namespace libtorrent {
 
 		// for write jobs, returns true if its block
 		// is not dirty anymore
-		bool completed(cached_piece_entry const* pe, int block_size);
+//		bool completed(cached_piece_entry const* pe, int block_size);
 
 		// unique identifier for the peer when reading
 		void* requester = nullptr;

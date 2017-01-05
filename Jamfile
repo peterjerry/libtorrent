@@ -561,7 +561,6 @@ SOURCES =
 	bandwidth_queue_entry
 	bdecode
 	bitfield
-	block_cache
 	bloom_filter
 	chained_buffer
 	choker
@@ -627,7 +626,6 @@ SOURCES =
 	socks5_stream
 	stat
 	storage
-	storage_piece_set
 	storage_utils
 	torrent
 	torrent_handle

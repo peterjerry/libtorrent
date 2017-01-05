@@ -41,7 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "libtorrent/aux_/disk_job_fence.hpp"
-#include "libtorrent/aux_/storage_piece_set.hpp"
 #include "libtorrent/storage_defs.hpp"
 #include "libtorrent/allocator.hpp"
 #include "libtorrent/part_file.hpp"
@@ -165,7 +164,6 @@ namespace libtorrent {
 	struct TORRENT_EXPORT storage_interface
 		: public std::enable_shared_from_this<storage_interface>
 		, public aux::disk_job_fence
-		, public aux::storage_piece_set
 		, boost::noncopyable
 	{
 		explicit storage_interface(file_storage const& fs) : m_files(fs) {}

@@ -16,7 +16,6 @@ nobase_include_HEADERS = \
   bencode.hpp                  \
   bdecode.hpp                  \
   bitfield.hpp                 \
-  block_cache.hpp              \
   bloom_filter.hpp             \
   broadcast_socket.hpp         \
   bt_peer_connection.hpp       \
@@ -183,7 +182,6 @@ nobase_include_HEADERS = \
   aux_/proxy_settings.hpp           \
   aux_/session_interface.hpp        \
   aux_/suggest_piece.hpp            \
-  aux_/storage_piece_set.hpp        \
   aux_/time.hpp                     \
   aux_/file_progress.hpp            \
   aux_/openssl.hpp                  \

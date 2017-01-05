@@ -2314,13 +2314,6 @@ namespace libtorrent {
 			}
 			we_have(piece);
 		}
-		else
-		{
-			// if the hash failed, remove it from the cache
-			if (m_storage)
-				m_ses.disk_thread().clear_piece(m_storage, piece);
-		}
-
 		if (m_num_checked_pieces < m_torrent_file->end_piece())
 		{
 			// we're not done yet, issue another job
