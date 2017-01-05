@@ -81,19 +81,10 @@ private:
 	int m_limiter_down_queue_idx;
 	int m_queued_writes_idx;
 	int m_queued_reads_idx;
-	int m_writes_cache_idx;
-	int m_reads_cache_idx;
-	int m_pinned_idx;
 	int m_num_blocks_read_idx;
-	int m_cache_hit_idx;
 	int m_blocks_in_use_idx;
 	int m_blocks_written_idx;
 	int m_write_ops_idx;
-
-	int m_mfu_size_idx;
-	int m_mfu_ghost_idx;
-	int m_mru_size_idx;
-	int m_mru_ghost_idx;
 
 	int m_utp_idle;
 	int m_utp_syn_sent;

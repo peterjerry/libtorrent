@@ -949,16 +949,14 @@ void pop_alerts(torrent_view& view, session_view& ses_view
 }
 
 void print_piece(lt::partial_piece_info const* pp
-	, lt::cached_piece_info const* cs
 	, std::vector<lt::peer_info> const& peers
 	, std::string& out)
 {
 	using namespace lt;
 
 	char str[1024];
-	assert(pp == nullptr || cs == nullptr || cs->piece == pp->piece_index);
-	int piece = static_cast<int>(pp ? pp->piece_index : cs->piece);
-	int num_blocks = pp ? pp->blocks_in_piece : int(cs->blocks.size());
+	int const piece = static_cast<int>(pp->piece_index);
+	int const num_blocks = pp->blocks_in_piece;
 
 	std::snprintf(str, sizeof(str), "%5d:[", piece);
 	out += str;
@@ -971,41 +969,32 @@ void print_piece(lt::partial_piece_info const* pp
 
 		char const* color = "";
 
-		if (pp == nullptr)
+		if (pp->blocks[j].bytes_progress > 0
+				&& pp->blocks[j].state == block_info::requested)
 		{
-			color = cs->blocks[j] ? esc("34;7") : esc("0");
-			chr = " ";
-		}
-		else
-		{
-			if (cs && cs->blocks[j] && pp->blocks[j].state != block_info::finished)
-				color = esc("36;7");
-			else if (pp->blocks[j].bytes_progress > 0
-					&& pp->blocks[j].state == block_info::requested)
-			{
-				if (pp->blocks[j].num_peers > 1) color = esc("0;1");
-				else color = snubbed ? esc("0;35") : esc("0;33");
+			if (pp->blocks[j].num_peers > 1) color = esc("0;1");
+			else color = snubbed ? esc("0;35") : esc("0;33");
 
 #ifndef TORRENT_WINDOWS
-				static char const* const progress[] = {
-					"\u2581", "\u2582", "\u2583", "\u2584",
-					"\u2585", "\u2586", "\u2587", "\u2588"
-				};
-				chr = progress[pp->blocks[j].bytes_progress * 8 / pp->blocks[j].block_size];
+			static char const* const progress[] = {
+				"\u2581", "\u2582", "\u2583", "\u2584",
+				"\u2585", "\u2586", "\u2587", "\u2588"
+			};
+			chr = progress[pp->blocks[j].bytes_progress * 8 / pp->blocks[j].block_size];
 #else
-				static char const* const progress[] = { "\xb0", "\xb1", "\xb2" };
-				chr = progress[pp->blocks[j].bytes_progress * 3 / pp->blocks[j].block_size];
+			static char const* const progress[] = { "\xb0", "\xb1", "\xb2" };
+			chr = progress[pp->blocks[j].bytes_progress * 3 / pp->blocks[j].block_size];
 #endif
-			}
-			else if (pp->blocks[j].state == block_info::finished) color = esc("32;7");
-			else if (pp->blocks[j].state == block_info::writing) color = esc("36;7");
-			else if (pp->blocks[j].state == block_info::requested)
-			{
-				color = snubbed ? esc("0;35") : esc("0");
-				chr = "=";
-			}
-			else { color = esc("0"); chr = " "; }
 		}
+		else if (pp->blocks[j].state == block_info::finished) color = esc("32;7");
+		else if (pp->blocks[j].state == block_info::writing) color = esc("36;7");
+		else if (pp->blocks[j].state == block_info::requested)
+		{
+			color = snubbed ? esc("0;35") : esc("0");
+			chr = "=";
+		}
+		else { color = esc("0"); chr = " "; }
+
 		if (last_color != color)
 		{
 			out += color;
@@ -1631,11 +1620,7 @@ COLUMN OPTIONS
 		int pos = view.height() + ses_view.height();
 		set_cursor_pos(0, pos);
 
-		int cache_flags = print_downloads ? 0 : lt::session::disk_cache_no_pieces;
 		torrent_handle h = view.get_active_handle();
-
-		cache_status cs;
-		ses.get_cache_info(&cs, h, cache_flags);
 
 #ifndef TORRENT_DISABLE_DHT
 		if (show_dht_status)
@@ -1743,53 +1728,12 @@ COLUMN OPTIONS
 					, [] (partial_piece_info const& lhs, partial_piece_info const& rhs)
 					{ return lhs.piece_index < rhs.piece_index; });
 
-				std::sort(cs.pieces.begin(), cs.pieces.end()
-					, [](cached_piece_info const& lhs, cached_piece_info const& rhs)
-					{ return lhs.piece < rhs.piece; });
-
 				int p = 0; // this is horizontal position
-				for (cached_piece_info const& i : cs.pieces)
-				{
-					if (pos + 3 >= terminal_height) break;
-
-					partial_piece_info* pp = nullptr;
-					partial_piece_info tmp;
-					tmp.piece_index = i.piece;
-					std::vector<partial_piece_info>::iterator ppi
-						= std::lower_bound(queue.begin(), queue.end(), tmp
-						, [](partial_piece_info const& lhs, partial_piece_info const& rhs)
-						{ return lhs.piece_index < rhs.piece_index; });
-
-					if (ppi != queue.end() && ppi->piece_index == i.piece) pp = &*ppi;
-
-					print_piece(pp, &i, peers, out);
-
-					int num_blocks = pp ? pp->blocks_in_piece : int(i.blocks.size());
-					p += num_blocks + 8;
-					bool continuous_mode = 8 + num_blocks > terminal_width;
-					if (continuous_mode)
-					{
-						while (p > terminal_width)
-						{
-							p -= terminal_width;
-							++pos;
-						}
-					}
-					else if (p + num_blocks + 8 > terminal_width)
-					{
-						out += "\x1b[K\n";
-						pos += 1;
-						p = 0;
-					}
-
-					if (pp) queue.erase(ppi);
-				}
-
 				for (partial_piece_info const& i : queue)
 				{
 					if (pos + 3 >= terminal_height) break;
 
-					print_piece(&i, nullptr, peers, out);
+					print_piece(&i, peers, out);
 
 					int num_blocks = i.blocks_in_piece;
 					p += num_blocks + 8;
@@ -1815,10 +1759,8 @@ COLUMN OPTIONS
 					pos += 1;
 				}
 
-				std::snprintf(str, sizeof(str), "%s %s read cache | %s %s downloading | %s %s cached | %s %s flushed | %s %s snubbed | = requested\x1b[K\n"
-					, esc("34;7"), esc("0") // read cache
+				std::snprintf(str, sizeof(str), "%s %s downloading | %s %s flushed | %s %s snubbed | = requested\x1b[K\n"
 					, esc("33;7"), esc("0") // downloading
-					, esc("36;7"), esc("0") // cached
 					, esc("32;7"), esc("0") // flushed
 					, esc("35;7"), esc("0") // snubbed
 					);

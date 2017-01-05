@@ -724,7 +724,7 @@ namespace libtorrent {
 		std::uint32_t const file_flags = file_flags_for_job(j
 			, m_settings.get_bool(settings_pack::coalesce_reads));
 
-		iovec_t iov = { m_disk_cache.allocate_buffer("hashing")
+		iovec_t iov = { m_buffer_pool.allocate_buffer("hashing")
 			, static_cast<std::size_t>(block_size) };
 		hasher h;
 		int ret = 0;
