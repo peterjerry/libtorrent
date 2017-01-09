@@ -391,7 +391,6 @@ namespace {
 		METRIC(disk, num_fenced_flush_piece)
 		METRIC(disk, num_fenced_flush_hashed)
 		METRIC(disk, num_fenced_flush_storage)
-		METRIC(disk, num_fenced_trim_cache)
 		METRIC(disk, num_fenced_file_priority)
 		METRIC(disk, num_fenced_load_torrent)
 		METRIC(disk, num_fenced_clear_piece)

@@ -254,7 +254,6 @@ namespace libtorrent {
 		&disk_io_thread::do_flush_piece,
 		&disk_io_thread::do_flush_hashed,
 		&disk_io_thread::do_flush_storage,
-		&disk_io_thread::do_trim_cache,
 		&disk_io_thread::do_file_priority,
 		&disk_io_thread::do_clear_piece
 	};
@@ -916,11 +915,6 @@ namespace libtorrent {
 		return status_t::no_error;
 	}
 
-	status_t disk_io_thread::do_trim_cache(disk_io_job*)
-	{
-		return status_t::no_error;
-	}
-
 	status_t disk_io_thread::do_file_priority(disk_io_job* j)
 	{
 		j->storage->set_file_priority(
@@ -1002,8 +996,7 @@ namespace libtorrent {
 		// the disk threads too early. We have to post all jobs
 		// before the disk threads are shut down
 		TORRENT_ASSERT(!m_abort
-			|| j->action == disk_io_job::flush_piece
-			|| j->action == disk_io_job::trim_cache);
+			|| j->action == disk_io_job::flush_piece);
 
 		// this happens for read jobs that get hung on pieces in the
 		// block cache, and then get issued

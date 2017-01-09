@@ -142,7 +142,6 @@ namespace libtorrent {
 		status_t do_flush_piece(disk_io_job* j);
 		status_t do_flush_hashed(disk_io_job* j);
 		status_t do_flush_storage(disk_io_job* j);
-		status_t do_trim_cache(disk_io_job* j);
 		status_t do_file_priority(disk_io_job* j);
 		status_t do_clear_piece(disk_io_job* j);
 		status_t do_resolve_links(disk_io_job* j);
