@@ -126,7 +126,8 @@ namespace libtorrent {
 		void submit_jobs() override;
 
 		// TODO: 4 simplify this function
-		int prep_read_job_impl(disk_io_job* j, bool check_fence = true);
+		// returns true if the job was blocked by a fence
+		bool prep_read_job_impl(disk_io_job* j, bool check_fence = true);
 
 		status_t do_read(disk_io_job* j);
 		status_t do_write(disk_io_job* j);
@@ -186,8 +187,7 @@ namespace libtorrent {
 			, std::unique_lock<std::mutex>& l);
 
 		void add_completed_jobs(jobqueue_t& jobs);
-		void add_completed_jobs_impl(jobqueue_t& jobs
-			, jobqueue_t& completed_jobs);
+		void add_completed_jobs_impl(jobqueue_t& jobs);
 
 		void fail_jobs(storage_error const& e, jobqueue_t& jobs_);
 		void fail_jobs_impl(storage_error const& e, jobqueue_t& src, jobqueue_t& dst);

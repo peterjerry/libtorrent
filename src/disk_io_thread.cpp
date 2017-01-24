@@ -426,18 +426,8 @@ namespace libtorrent {
 		j->requester = requester;
 		j->callback = std::move(handler);
 
-		int ret = prep_read_job_impl(j);
-
-		switch (ret)
-		{
-			case 0:
-				j->call_callback();
-				free_job(j);
-				break;
-			case 1:
-				add_job(j);
-				break;
-		}
+		if (!prep_read_job_impl(j))
+			add_job(j);
 	}
 
 	// this function checks to see if a read job is a cache hit,
@@ -446,11 +436,10 @@ namespace libtorrent {
 	// up the job in the piece read job list
 	// the cache std::mutex must be held when calling this
 	//
-	// returns 0 if the job succeeded immediately
-	// 1 if it needs to be added to the job queue
-	// 2 if it was deferred and will be performed later (no need to
+	// false if it needs to be added to the job queue
+	// true if it was deferred and will be performed later (no need to
 	//   add it to the queue)
-	int disk_io_thread::prep_read_job_impl(disk_io_job* j, bool check_fence)
+	bool disk_io_thread::prep_read_job_impl(disk_io_job* j, bool check_fence)
 	{
 		TORRENT_ASSERT(j->action == disk_io_job::read);
 
@@ -461,9 +450,9 @@ namespace libtorrent {
 			DLOG("blocked job: %s (torrent: %d total: %d)\n"
 				, job_action_name[j->action], j->storage ? j->storage->num_blocked() : 0
 				, int(m_stats_counters[counters::blocked_disk_jobs]));
-			return 2;
+			return true;
 		}
-		return 1;
+		return false;
 	}
 
 	bool disk_io_thread::async_write(storage_index_t const storage, peer_request const& r
@@ -1257,23 +1246,17 @@ namespace libtorrent {
 
 	void disk_io_thread::add_completed_jobs(jobqueue_t& jobs)
 	{
-		jobqueue_t new_completed_jobs;
 		do
 		{
 			// when a job completes, it's possible for it to cause
 			// a fence to be lowered, issuing the jobs queued up
-			// behind the fence. It's also possible for some of these
-			// jobs to be cache-hits, completing immediately. Those
-			// jobs are added to the new_completed_jobs queue and
-			// we need to re-issue those
-			add_completed_jobs_impl(jobs, new_completed_jobs);
+			// behind the fence
+			add_completed_jobs_impl(jobs);
 			TORRENT_ASSERT(jobs.size() == 0);
-			jobs.swap(new_completed_jobs);
 		} while (jobs.size() > 0);
 	}
 
-	void disk_io_thread::add_completed_jobs_impl(jobqueue_t& jobs
-		, jobqueue_t& completed_jobs)
+	void disk_io_thread::add_completed_jobs_impl(jobqueue_t& jobs)
 	{
 		jobqueue_t new_jobs;
 		int ret = 0;
@@ -1312,48 +1295,25 @@ namespace libtorrent {
 		if (new_jobs.size() > 0)
 		{
 			jobqueue_t other_jobs;
-			jobqueue_t flush_jobs;
 			while (new_jobs.size() > 0)
 			{
 				disk_io_job* j = new_jobs.pop_front();
 
-				if (j->action == disk_io_job::read)
+				if (j->action == disk_io_job::read
+					&& prep_read_job_impl(j, false))
 				{
-					int state = prep_read_job_impl(j, false);
-					switch (state)
-					{
-						case 0:
-							completed_jobs.push_back(j);
-							break;
-						case 1:
-							other_jobs.push_back(j);
-							break;
-					}
-					continue;
-				}
-
-				// write jobs should be put straight into the cache
-				if (j->action != disk_io_job::write)
-				{
-					other_jobs.push_back(j);
+					// job blocked by fence
 					continue;
 				}
 
 				// this isn't correct, since jobs in the jobs
 				// queue aren't ordered
 				other_jobs.push_back(j);
-				continue;
 			}
 
 			{
 				std::lock_guard<std::mutex> l(m_job_mutex);
 				m_generic_io_jobs.m_queued_jobs.append(other_jobs);
-			}
-
-			while (flush_jobs.size() > 0)
-			{
-				disk_io_job* j = flush_jobs.pop_front();
-				add_job(j, false);
 			}
 
 			{
