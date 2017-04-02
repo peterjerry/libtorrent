@@ -702,10 +702,12 @@ namespace libtorrent {
 		return false;
 	}
 
+#ifndef TORRENT_NO_DEPRECATE
 	storage_interface* default_storage_constructor(storage_params const& params
 		, file_pool& pool)
 	{
 		return new default_storage(params, pool);
 	}
+#endif
 
 } // namespace libtorrent

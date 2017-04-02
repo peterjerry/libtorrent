@@ -81,7 +81,7 @@ TORRENT_TEST(seed_mode_disable_hash_checks)
 			params.flags |= add_torrent_params::flag_seed_mode;
 			// just to make sure the disable_hash_checks really work, we
 			// shouldn't be verifying anything from the storage
-			params.storage = disabled_storage_constructor;
+//			params.storage = disabled_storage_constructor;
 		}
 		// on alert
 		, [](lt::alert const*, lt::session&) {}
