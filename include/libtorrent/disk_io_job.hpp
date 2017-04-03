@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace libtorrent {
 
-	struct storage_interface;
+	class default_storage;
 	struct cached_piece_entry;
 	class torrent_info;
 	struct add_torrent_params;
@@ -132,7 +132,7 @@ namespace libtorrent {
 			, int> argument;
 
 		// the disk storage this job applies to (if applicable)
-		std::shared_ptr<storage_interface> storage;
+		std::shared_ptr<default_storage> storage;
 
 		// this is called when operation completes
 

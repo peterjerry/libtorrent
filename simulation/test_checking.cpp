@@ -81,7 +81,9 @@ TORRENT_TEST(checking)
 	run_test(
 		[](lt::add_torrent_params& atp, lt::settings_pack& p) {
 			atp.flags |= lt::add_torrent_params::flag_auto_managed;
+#ifndef TORRENT_NO_DEPRECATE
 			p.set_int(lt::settings_pack::cache_size, 100);
+#endif
 		},
 		[](lt::session& ses) {
 

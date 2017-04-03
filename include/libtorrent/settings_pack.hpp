@@ -1609,7 +1609,7 @@ namespace libtorrent {
 			// them in the cache is limited.
 			cache_size_volatile,
 #else
-			deprecated23,
+			deprecated27,
 #endif
 
 			// The maximum request range of an url seed in bytes. This value

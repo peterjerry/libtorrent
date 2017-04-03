@@ -228,7 +228,7 @@ void run_storage_tests(std::shared_ptr<torrent_info> info
 	p.path = test_path;
 	p.files = &fs;
 	p.mode = storage_mode;
-	std::unique_ptr<storage_interface> s(new default_storage(p, fp));
+	auto s = std::make_shared<default_storage>(p, fp);
 	s->m_settings = &set;
 
 	storage_error ec;

@@ -282,7 +282,7 @@ namespace libtorrent {
 
 		// storages that have had write activity recently and will get ticked
 		// soon, for deferred actions (say, flushing partfile metadata)
-		std::vector<std::pair<time_point, std::weak_ptr<storage_interface>>> m_need_tick;
+		std::vector<std::pair<time_point, std::weak_ptr<default_storage>>> m_need_tick;
 
 		// this is protected by the completed_jobs_mutex. It's true whenever
 		// there's a call_job_handlers message in-flight to the network thread. We
@@ -290,7 +290,7 @@ namespace libtorrent {
 		// completion callbacks in m_completed jobs
 		bool m_job_completions_in_flight = false;
 
-		aux::vector<std::shared_ptr<storage_interface>, storage_index_t> m_torrents;
+		aux::vector<std::shared_ptr<default_storage>, storage_index_t> m_torrents;
 
 		// indices into m_torrents to empty slots
 		std::vector<storage_index_t> m_free_slots;

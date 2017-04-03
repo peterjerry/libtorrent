@@ -243,7 +243,7 @@ TORRENT_TEST(settings_pack_abi)
 
 	// bool
 	TEST_EQUAL(settings_pack::use_dht_as_fallback, settings_pack::bool_type_base + 4);
-	TEST_EQUAL(settings_pack::use_read_cache, settings_pack::bool_type_base + 7);
+	TEST_EQUAL(settings_pack::auto_manage_prefer_seeds, settings_pack::bool_type_base + 12);
 	TEST_EQUAL(settings_pack::proxy_tracker_connections, settings_pack::bool_type_base + 67);
 
 	// ints

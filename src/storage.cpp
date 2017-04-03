@@ -83,9 +83,9 @@ namespace libtorrent {
 			std::memset(buf.data(), 0, buf.size());
 	}
 
-	default_storage::default_storage(storage_params const& params
+	default_storage::default_storage(storage_params params
 		, file_pool& pool)
-		: storage_interface(*params.files)
+		: m_files(*params.files)
 		, m_pool(pool)
 		, m_allocate_files(params.mode == storage_mode_allocate)
 	{
@@ -703,11 +703,8 @@ namespace libtorrent {
 	}
 
 #ifndef TORRENT_NO_DEPRECATE
-	storage_interface* default_storage_constructor(storage_params const& params
-		, file_pool& pool)
-	{
-		return new default_storage(params, pool);
-	}
+	storage_interface* default_storage_constructor(storage_params const&, file_pool&)
+	{ TORRENT_ASSERT_FAIL(); return nullptr; }
 #endif
 
 } // namespace libtorrent
