@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/disk_io_job.hpp"
 #include "libtorrent/disk_job_pool.hpp"
 #include "libtorrent/disk_buffer_pool.hpp"
-#include "libtorrent/file_pool.hpp"
+#include "libtorrent/aux_/file_view_pool.hpp"
 #include "libtorrent/disk_interface.hpp"
 #include "libtorrent/performance_counters.hpp"
 #include "libtorrent/aux_/session_settings.hpp"
@@ -233,12 +233,8 @@ namespace libtorrent {
 		// the last time we expired write blocks from the cache
 		time_point m_last_cache_expiry = min_time();
 
-		// we call close_oldest_file on the file_pool regularly. This is the next
-		// time we should call it
-		time_point m_next_close_oldest_file = min_time();
-
 		// LRU cache of open files
-		file_pool m_file_pool{40};
+		aux::file_view_pool m_file_pool{40};
 
 		// disk cache
 		disk_buffer_pool m_buffer_pool;

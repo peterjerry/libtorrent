@@ -48,6 +48,7 @@ nobase_include_HEADERS = \
   extensions.hpp               \
   file.hpp                     \
   file_pool.hpp                \
+  file_view_pool.hpp           \
   file_storage.hpp             \
   fingerprint.hpp              \
   fwd.hpp                      \

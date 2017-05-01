@@ -52,8 +52,13 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace libtorrent {
 
 	class session;
-	struct file_pool;
-	namespace aux { struct session_settings; }
+
+namespace aux {
+	struct session_settings;
+	struct file_view_pool;
+	struct file_view;
+}
+
 	struct add_torrent_params;
 
 #ifndef TORRENT_NO_DEPRECATE
@@ -77,13 +82,13 @@ namespace libtorrent {
 		// represents the file mapping that have been made to the torrent before
 		// adding it. That's where files are supposed to be saved and looked for
 		// on disk. ``save_path`` is the root save folder for this torrent.
-		// ``file_pool`` is the cache of file handles that the storage will use.
-		// All files it opens will ask the file_pool to open them. ``file_prio``
+		// ``file_view_pool`` is the cache of file mappings that the storage will use.
+		// All files it opens will ask the file_view_pool to open them. ``file_prio``
 		// is a vector indicating the priority of files on startup. It may be
 		// an empty vector. Any file whose index is not represented by the vector
 		// (because the vector is too short) are assumed to have priority 1.
 		// this is used to treat files with priority 0 slightly differently.
-		default_storage(storage_params params, file_pool&);
+		default_storage(storage_params params, aux::file_view_pool&);
 
 		// hidden
 		~default_storage();
@@ -172,15 +177,15 @@ namespace libtorrent {
 		mutable stat_cache m_stat_cache;
 
 		// helper function to open a file in the file pool with the right mode
-		file_handle open_file(file_index_t file, std::uint32_t mode, storage_error& ec) const;
-		file_handle open_file_impl(file_index_t file, std::uint32_t mode, error_code& ec) const;
+		aux::file_view open_file(file_index_t file, std::uint32_t mode, storage_error& ec) const;
+		aux::file_view open_file_impl(file_index_t file, std::uint32_t mode, error_code& ec) const;
 
 		aux::vector<std::uint8_t, file_index_t> m_file_priority;
 		std::string m_save_path;
 		std::string m_part_file_name;
 		// the file pool is a member of the disk_io_thread
 		// to make all storage instances share the pool
-		file_pool& m_pool;
+		aux::file_view_pool& m_pool;
 
 		// used for skipped files
 		std::unique_ptr<part_file> m_part_file;
@@ -190,9 +195,9 @@ namespace libtorrent {
 		// whose bit is 0, we set the file size, to make the file allocated
 		// on disk (in full allocation mode) and just sparsely allocated in
 		// case of sparse allocation mode
-		mutable typed_bitfield<file_index_t> m_file_created;
+//		mutable typed_bitfield<file_index_t> m_file_created;
 
-		bool m_allocate_files;
+//		bool m_allocate_files;
 	};
 
 }

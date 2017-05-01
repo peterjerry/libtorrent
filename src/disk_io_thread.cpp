@@ -1149,20 +1149,6 @@ namespace libtorrent {
 					m_need_tick.erase(m_need_tick.begin());
 					if (st) st->tick();
 				}
-
-				if (now > m_next_close_oldest_file)
-				{
-					seconds const interval(m_settings.get_int(settings_pack::close_file_interval));
-					if (interval <= seconds(0))
-					{
-						m_next_close_oldest_file = max_time();
-					}
-					else
-					{
-						m_next_close_oldest_file = now + interval;
-						m_file_pool.close_oldest();
-					}
-				}
 			}
 
 			execute_job(j);

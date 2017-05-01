@@ -37,7 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/hasher.hpp"
 #include "libtorrent/entry.hpp"
 #include "libtorrent/bencode.hpp"
-#include "libtorrent/file_pool.hpp"
+#include "libtorrent/aux_/file_view_pool.hpp"
 #include "libtorrent/storage_defs.hpp"
 
 using namespace lt;
@@ -168,7 +168,7 @@ std::shared_ptr<lt::torrent_info> make_test_torrent(
 void generate_files(lt::torrent_info const& ti, std::string const& path
 	, bool alternate_data)
 {
-	file_pool fp;
+	aux::file_view_pool fp;
 
 	storage_params params;
 	params.files = &ti.files();

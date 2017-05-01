@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "settings.hpp"
 
 #include "libtorrent/storage.hpp"
-#include "libtorrent/file_pool.hpp"
+#include "libtorrent/aux_/file_view_pool.hpp"
 #include "libtorrent/hasher.hpp"
 #include "libtorrent/session.hpp"
 #include "libtorrent/alert_types.hpp"
@@ -149,7 +149,7 @@ std::shared_ptr<torrent_info> setup_torrent_info(file_storage& fs
 }
 
 std::shared_ptr<default_storage> setup_torrent(file_storage& fs
-	, file_pool& fp
+	, aux::file_view_pool& fp
 	, std::vector<char>& buf
 	, std::string const& test_path
 	, aux::session_settings& set)
@@ -221,7 +221,7 @@ void run_storage_tests(std::shared_ptr<torrent_info> info
 	char* piece = static_cast<char*>(malloc(piece_size));
 
 	{ // avoid having two storages use the same files
-	file_pool fp;
+	aux::file_view_pool fp;
 	boost::asio::io_service ios;
 	disk_buffer_pool dp(16 * 1024, ios);
 	storage_params p;
@@ -304,7 +304,7 @@ void test_remove(std::string const& test_path, bool unbuffered)
 
 	file_storage fs;
 	std::vector<char> buf;
-	file_pool fp;
+	aux::file_view_pool fp;
 	io_service ios;
 	disk_buffer_pool dp(16 * 1024, ios);
 
@@ -378,7 +378,7 @@ void test_rename(std::string const& test_path)
 
 	file_storage fs;
 	std::vector<char> buf;
-	file_pool fp;
+	aux::file_view_pool fp;
 	io_service ios;
 	disk_buffer_pool dp(16 * 1024, ios);
 	aux::session_settings set;
@@ -451,7 +451,7 @@ void test_check_files(std::string const& test_path
 	info = std::make_shared<torrent_info>(&buf[0], int(buf.size()), std::ref(ec), 0);
 
 	aux::session_settings set;
-	file_pool fp;
+	aux::file_view_pool fp;
 	boost::asio::io_service ios;
 	counters cnt;
 	disk_io_thread io(ios, cnt);
@@ -545,10 +545,10 @@ void run_test(bool unbuffered)
 
 	TEST_EQUAL(file_size(combine_path(base, "test5.tmp")), 3253);
 	TEST_EQUAL(file_size(combine_path(base, "test6.tmp")), 841);
-	std::printf("file: %d expected: %d last_file_size: %d, piece_size: %d\n"
+	std::printf("file: %d expected: %d, piece_size: %d\n"
 		, int(file_size(combine_path(base, "test7.tmp")))
-		, int(last_file_size - piece_size), last_file_size, int(piece_size));
-	TEST_EQUAL(file_size(combine_path(base, "test7.tmp")), last_file_size - int(piece_size));
+		, last_file_size, int(piece_size));
+	TEST_EQUAL(file_size(combine_path(base, "test7.tmp")), last_file_size);
 	remove_all(combine_path(test_path, "temp_storage"), ec);
 	if (ec && ec != boost::system::errc::no_such_file_or_directory)
 		std::cout << "remove_all '" << combine_path(test_path, "temp_storage")
@@ -1343,7 +1343,7 @@ TORRENT_TEST(move_storage_to_self)
 	aux::session_settings set;
 	file_storage fs;
 	std::vector<char> buf;
-	file_pool fp;
+	aux::file_view_pool fp;
 	io_service ios;
 	disk_buffer_pool dp(16 * 1024, ios);
 	std::shared_ptr<default_storage> s = setup_torrent(fs, fp, buf, save_path, set);
@@ -1372,7 +1372,7 @@ TORRENT_TEST(move_storage_into_self)
 	aux::session_settings set;
 	file_storage fs;
 	std::vector<char> buf;
-	file_pool fp;
+	aux::file_view_pool fp;
 	io_service ios;
 	disk_buffer_pool dp(16 * 1024, ios);
 	std::shared_ptr<default_storage> s = setup_torrent(fs, fp, buf, save_path, set);
@@ -1418,7 +1418,7 @@ TORRENT_TEST(dont_move_intermingled_files)
 	aux::session_settings set;
 	file_storage fs;
 	std::vector<char> buf;
-	file_pool fp;
+	aux::file_view_pool fp;
 	io_service ios;
 	disk_buffer_pool dp(16 * 1024, ios);
 	std::shared_ptr<default_storage> s = setup_torrent(fs, fp, buf, save_path, set);
