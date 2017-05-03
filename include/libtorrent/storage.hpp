@@ -69,9 +69,9 @@ namespace aux {
 
 	struct disk_io_thread;
 
-	class TORRENT_EXPORT default_storage
-		: public std::enable_shared_from_this<default_storage>
-		, public aux::disk_job_fence
+	struct TORRENT_EXTRA_EXPORT default_storage
+		: std::enable_shared_from_this<default_storage>
+		, aux::disk_job_fence
 		, boost::noncopyable
 	{
 		friend struct write_fileop;

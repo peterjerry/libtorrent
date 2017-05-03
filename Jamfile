@@ -643,7 +643,6 @@ SOURCES =
 	utf8
 	utp_socket_manager
 	utp_stream
-	file_pool
 	file_view_pool
 	lsd
 	enum_net

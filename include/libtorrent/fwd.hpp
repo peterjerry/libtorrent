@@ -223,7 +223,7 @@ struct settings_pack;
 
 // include/libtorrent/storage.hpp
 struct storage_interface;
-class default_storage;
+struct default_storage;
 
 // include/libtorrent/storage_defs.hpp
 struct storage_interface;

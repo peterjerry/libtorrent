@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace libtorrent {
 
-	class default_storage;
+	struct default_storage;
 	struct cached_piece_entry;
 	class torrent_info;
 	struct add_torrent_params;

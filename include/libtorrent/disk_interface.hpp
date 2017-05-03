@@ -117,7 +117,7 @@ namespace libtorrent {
 	using pool_file_status = open_file_state;
 #endif
 
-	struct TORRENT_EXTRA_EXPORT disk_interface
+	struct TORRENT_EXPORT disk_interface
 	{
 		enum flags_t : std::uint8_t
 		{

@@ -367,8 +367,7 @@ namespace {
 		, std::string const& save_path
 		, entry const& resume_data
 		, storage_mode_t storage_mode
-		, bool paused
-		, storage_constructor_type)
+		, bool paused)
 	{
 		add_torrent_params p;
 		p.ti = std::make_shared<torrent_info>(ti);
@@ -391,7 +390,6 @@ namespace {
 		, entry const& resume_data
 		, storage_mode_t storage_mode
 		, bool paused
-		, storage_constructor_type
 		, void* userdata)
 	{
 		TORRENT_ASSERT_PRECOND(!save_path.empty());

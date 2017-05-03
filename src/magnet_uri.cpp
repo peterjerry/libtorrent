@@ -128,7 +128,6 @@ namespace libtorrent {
 		, std::string const& save_path
 		, storage_mode_t storage_mode
 		, bool paused
-		, storage_constructor_type
 		, void*)
 	{
 		add_torrent_params params;

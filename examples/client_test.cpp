@@ -515,7 +515,6 @@ bool seed_mode = false;
 int cache_size = 1024;
 
 bool share_mode = false;
-bool disable_storage = false;
 
 bool quit = false;
 
@@ -574,7 +573,6 @@ void add_magnet(lt::session& ses, lt::string_view uri)
 	p.download_limit = torrent_download_limit;
 
 	if (seed_mode) p.flags |= lt::add_torrent_params::flag_seed_mode;
-	if (disable_storage) p.storage = lt::disabled_storage_constructor;
 	if (share_mode) p.flags |= lt::add_torrent_params::flag_share_mode;
 	p.save_path = save_path;
 	p.storage_mode = static_cast<lt::storage_mode_t>(allocation_mode);
@@ -612,7 +610,6 @@ bool add_torrent(lt::session& ses, std::string torrent)
 	ec.clear();
 
 	if (seed_mode) p.flags |= add_torrent_params::flag_seed_mode;
-	if (disable_storage) p.storage = disabled_storage_constructor;
 	if (share_mode) p.flags |= add_torrent_params::flag_share_mode;
 
 	p.max_connections = max_connections_per_torrent;
@@ -1059,7 +1056,6 @@ R"(  -i <i2p-host>         the hostname to an I2P SAM bridge to use
 R"(
 DISK OPTIONS
   -a <mode>             sets the allocation mode. [sparse|allocate]
-  -0                    disable disk I/O, read garbage and don't flush to disk
 
 TORRENT is a path to a .torrent file
 MAGNETURL is a magnet link
@@ -1198,7 +1194,6 @@ MAGNETURL is a magnet link
 					rate_limit_locals = true;
 					break;
 				}
-			case '0': disable_storage = true; --i;
 		}
 		++i; // skip the argument
 	}

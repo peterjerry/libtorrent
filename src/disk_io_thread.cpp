@@ -39,7 +39,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/aux_/throw.hpp"
 #include "libtorrent/error_code.hpp"
 #include "libtorrent/error.hpp"
-#include "libtorrent/file_pool.hpp"
 #include "libtorrent/torrent_info.hpp"
 #include "libtorrent/platform_util.hpp"
 #include "libtorrent/time.hpp"

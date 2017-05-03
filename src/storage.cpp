@@ -67,7 +67,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/torrent.hpp"
 #include "libtorrent/aux_/path.hpp"
 #include "libtorrent/invariant_check.hpp"
-#include "libtorrent/file_pool.hpp"
 #include "libtorrent/aux_/session_impl.hpp"
 #include "libtorrent/disk_buffer_holder.hpp"
 #include "libtorrent/stat_cache.hpp"
@@ -653,34 +652,6 @@ namespace libtorrent {
 			ec.operation = storage_error::open;
 			return aux::file_view();
 		}
-/*
-		if (m_allocate_files && (mode & file::rw_mask) != file::read_only)
-		{
-			if (m_file_created.size() != files().num_files())
-				m_file_created.resize(files().num_files(), false);
-
-			TORRENT_ASSERT(int(m_file_created.size()) == files().num_files());
-			TORRENT_ASSERT(file < m_file_created.end_index());
-			// if this is the first time we open this file for writing,
-			// and we have m_allocate_files enabled, set the final size of
-			// the file right away, to allocate it on the filesystem.
-			if (m_file_created[file] == false)
-			{
-				error_code e;
-				std::int64_t const size = files().file_size(file);
-				h->set_size(size, e);
-				m_file_created.set_bit(file);
-				if (e)
-				{
-					ec.ec = e;
-					ec.file(file);
-					ec.operation = storage_error::fallocate;
-					return h;
-				}
-				m_stat_cache.set_dirty(file);
-			}
-		}
-*/
 		return h;
 	}
 
@@ -738,10 +709,4 @@ namespace libtorrent {
 
 		return false;
 	}
-
-#ifndef TORRENT_NO_DEPRECATE
-	storage_interface* default_storage_constructor(storage_params const&, file_pool&)
-	{ TORRENT_ASSERT_FAIL(); return nullptr; }
-#endif
-
 } // namespace libtorrent

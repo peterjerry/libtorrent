@@ -101,11 +101,6 @@ namespace libtorrent {
 		aux::vector<std::uint8_t, file_index_t> const* priorities = nullptr; // optional
 		torrent_info const* info = nullptr; // optional
 	};
-
-#ifndef TORRENT_NO_DEPRECATE
-	using storage_constructor_type = std::function<storage_interface*(storage_params const& params, file_pool&)>;
-	TORRENT_DEPRECATED_EXPORT storage_interface* default_storage_constructor(storage_params const&, file_pool&);
-#endif
 }
 
 #endif

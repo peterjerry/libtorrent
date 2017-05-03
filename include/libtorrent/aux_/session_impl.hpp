@@ -60,7 +60,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/session_status.hpp"
 #include "libtorrent/add_torrent_params.hpp"
 #include "libtorrent/stat.hpp"
-#include "libtorrent/file_pool.hpp"
 #include "libtorrent/bandwidth_manager.hpp"
 #include "libtorrent/socket_type.hpp"
 #include "libtorrent/disk_io_thread.hpp"
