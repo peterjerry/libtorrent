@@ -144,11 +144,13 @@ namespace libtorrent {
 				m_part_file->export_file([&f, &ec](std::int64_t file_offset, span<char> buf)
 				{
 					// TODO: error handling
+					auto file_range = f.range().subspan(file_offset);
+					TORRENT_ASSERT(file_range.size() >= buf.size());
+					std::memcpy(const_cast<char*>(file_range.data())
+						, buf.data(), buf.size());
 					// TODO: memcpy() casts away volatile, come up with some solution
 					// to using std::copy()
-					std::memcpy(const_cast<char*>(f.range().subspan(file_offset).data())
-						, buf.data(), buf.size());
-//					std::copy(buf.begin(), buf.end(), f.range().subspan(file_offset).begin());
+					// std::copy(buf.begin(), buf.end(), f.range().begin());
 				}, fs.file_offset(i), fs.file_size(i), ec.ec);
 
 				if (ec)
@@ -497,29 +499,26 @@ namespace libtorrent {
 				, flags, ec);
 			if (ec) return -1;
 
-			// please ignore the adjusted_offset. It's just file_offset.
-			std::int64_t adjusted_offset =
-#ifndef TORRENT_NO_DEPRECATE
-				files().file_base_deprecated(file_index) +
-#endif
-				file_offset;
-
 			int ret = 0;
 			error_code e;
 			span<aux::byte const volatile> file_range = handle.range();
-			for (auto buf : vec)
+			if (file_range.size() > file_offset)
 			{
-				// TODO: error handling
-				// TODO: memcpy() casts away volatile, come up with some solution
-				// to using std::copy()
-				TORRENT_ASSERT(file_range.size() - adjusted_offset >= buf.size());
-				auto file_vec = file_range.subspan(adjusted_offset, buf.size());
-				std::memcpy(buf.data()
-					, const_cast<char const*>(file_vec.data())
-					, file_vec.size());
-//				std::copy(file_vec.begin(), file_vec.end(), buf.begin());
-				adjusted_offset += buf.size();
-				ret += buf.size();
+				file_range = file_range.subspan(file_offset);
+				for (auto buf : vec)
+				{
+					// TODO: error handling
+					if (file_range.empty()) break;
+					if (file_range.size() < buf.size()) buf = buf.first(file_range.size());
+					std::memcpy(buf.data()
+						, const_cast<char const*>(file_range.data())
+						, buf.size());
+					// TODO: memcpy() casts away volatile, come up with some solution
+					// to using std::copy()
+					// std::copy(file_vec.begin(), file_vec.end(), buf.begin());
+					file_range = file_range.subspan(buf.size());
+					ret += buf.size();
+				}
 			}
 
 			// set this unconditionally in case the upper layer would like to treat
@@ -584,26 +583,19 @@ namespace libtorrent {
 				, open_mode_t::write | flags, ec);
 			if (ec) return -1;
 
-			// please ignore the adjusted_offset. It's just file_offset.
-			std::int64_t adjusted_offset =
-#ifndef TORRENT_NO_DEPRECATE
-				files().file_base_deprecated(file_index) +
-#endif
-				file_offset;
-
 			int ret = 0;
 			error_code e;
-			span<aux::byte volatile> file_range = handle.range();
+			span<aux::byte volatile> file_range = handle.range().subspan(file_offset);
 			for (auto buf : vec)
 			{
 				// TODO: error handling
+				TORRENT_ASSERT(file_range.size() >= buf.size());
+				std::memcpy(const_cast<char*>(file_range.data())
+					, buf.data(), buf.size());
 				// TODO: memcpy() casts away volatile, come up with some solution
 				// to using std::copy()
-				TORRENT_ASSERT(file_range.size() - adjusted_offset >= buf.size());
-					std::memcpy(const_cast<char*>(file_range.subspan(adjusted_offset).data())
-						, buf.data(), buf.size());
-//				std::copy(buf.begin(), buf.end(), file_range.subspan(adjusted_offset).begin());
-				adjusted_offset += buf.size();
+				// std::copy(buf.begin(), buf.end(), file_range.begin());
+				file_range = file_range.subspan(buf.size());
 				ret += buf.size();
 			}
 
