@@ -228,6 +228,31 @@ namespace libtorrent {
 		job_queue m_hash_io_jobs;
 		disk_io_thread_pool m_hash_threads;
 
+		// uniquely identifies a torrent and offset. It is used as the key in the
+		// dictionary mapping locations to write jobs
+		struct torrent_location
+		{
+			torrent_location(default_storage* t, piece_index_t p, int o)
+				: torrent(t), piece(p), offset(o) {}
+			default_storage* torrent;
+			piece_index_t piece;
+			int offset;
+			bool operator<(torrent_location const& rhs) const
+			{
+				return std::tie(torrent, piece, offset)
+					< std::tie(rhs.torrent, rhs.piece, rhs.offset);
+			}
+		};
+
+		// every write job is inserted into this map while it is in the job queue.
+		// It is removed after the write completes.
+		// protected by m_store_buffer_mutex
+		// TODO: factor out the store buffer into a separate class
+		std::mutex m_store_buffer_mutex;
+
+		// TODO: this should be a hash table
+		std::map<torrent_location, char*> m_store_buffer;
+
 		aux::session_settings m_settings;
 
 		// the last time we expired write blocks from the cache

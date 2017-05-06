@@ -115,10 +115,6 @@ namespace libtorrent {
 			in_progress = 0x20
 		};
 
-		// for write jobs, returns true if its block
-		// is not dirty anymore
-//		bool completed(cached_piece_entry const* pe, int block_size);
-
 		// unique identifier for the peer when reading
 		void* requester = nullptr;
 

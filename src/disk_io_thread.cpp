@@ -206,9 +206,7 @@ namespace libtorrent {
 		// this disk I/O subsystem only supports a single thread (for now).
 		// the only reason is that the async_hash() job would race with the
 		// preceding async_write() jobs.
-		// TODO: 3 once we have a job queue where pending writes can be looked up
-		// and used by the hash job, we can support more threads again
-		int const num_threads = std::min(1, m_settings.get_int(settings_pack::aio_threads));
+		int const num_threads = m_settings.get_int(settings_pack::aio_threads);
 		// add one hasher thread for every three generic threads
 		int const num_hash_threads = num_threads / 4;
 		m_generic_threads.set_max_threads(num_threads - num_hash_threads);
@@ -228,6 +226,14 @@ namespace libtorrent {
 		{
 			disk_io_job* j = src.pop_front();
 			TORRENT_ASSERT((j->flags & disk_io_job::in_progress) || !j->storage);
+
+			if (j->action == disk_io_job::write)
+			{
+				std::lock_guard<std::mutex> l(m_store_buffer_mutex);
+				auto it = m_store_buffer.find(torrent_location(j->storage.get(), j->piece, j->d.io.offset));
+				TORRENT_ASSERT(it != m_store_buffer.end());
+				m_store_buffer.erase(it);
+			}
 			j->ret = status_t::fatal_disk_error;
 			j->error = e;
 			dst.push_back(j);
@@ -401,6 +407,13 @@ namespace libtorrent {
 		if (!j->storage->set_need_tick())
 			m_need_tick.push_back({aux::time_now() + minutes(2), j->storage});
 
+		{
+			std::lock_guard<std::mutex> l(m_store_buffer_mutex);
+			auto it = m_store_buffer.find(torrent_location(j->storage.get(), j->piece, j->d.io.offset));
+			TORRENT_ASSERT(it != m_store_buffer.end());
+			m_store_buffer.erase(it);
+		}
+
 		return ret != j->d.io.buffer_size
 			? status_t::fatal_disk_error : status_t::no_error;
 	}
@@ -477,6 +490,12 @@ namespace libtorrent {
 		j->flags = flags;
 
 		TORRENT_ASSERT((r.start % m_buffer_pool.block_size()) == 0);
+
+		{
+			std::lock_guard<std::mutex> l(m_store_buffer_mutex);
+			m_store_buffer.insert({torrent_location(j->storage.get(), j->piece, j->d.io.offset)
+				, boost::get<disk_buffer_holder>(j->argument).get()});
+		}
 
 		if (j->storage->is_blocked(j))
 		{
@@ -710,6 +729,8 @@ namespace libtorrent {
 		std::uint32_t const file_flags = file_flags_for_job(j
 			, m_settings.get_bool(settings_pack::coalesce_reads));
 
+		// TODO: don't allocate any space here, just hash directly from the memory
+		// mapped region
 		iovec_t iov = { m_buffer_pool.allocate_buffer("hashing")
 			, static_cast<std::size_t>(block_size) };
 		hasher h;
@@ -723,9 +744,25 @@ namespace libtorrent {
 			time_point const start_time = clock_type::now();
 
 			iov = iov.first(aux::numeric_cast<std::size_t>(std::min(block_size, piece_size - offset)));
-			ret = j->storage->readv(iov, j->piece
-				, offset, file_flags, j->error);
-			if (ret < 0) break;
+
+			std::unique_lock<std::mutex> l(m_store_buffer_mutex);
+			auto it = m_store_buffer.find({j->storage.get(), j->piece, offset});
+			if (it != m_store_buffer.end())
+			{
+				std::memcpy(iov.data(), it->second, iov.size());
+				ret = int(iov.size());
+
+				l.unlock();
+			}
+			else
+			{
+				l.unlock();
+
+				ret = j->storage->readv(iov, j->piece
+					, offset, file_flags, j->error);
+				if (ret < 0) break;
+			}
+
 			iov = iov.first(std::size_t(ret));
 
 			if (!j->error.ec)
