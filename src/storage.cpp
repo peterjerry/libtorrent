@@ -223,7 +223,7 @@ namespace libtorrent {
 			m_allocate_files = false;
 #endif
 
-//		m_file_created.resize(files().num_files(), false);
+		m_file_created.resize(files().num_files(), false);
 
 		// first, create all missing directories
 		std::string last_path;
@@ -258,23 +258,7 @@ namespace libtorrent {
 			if ((!err && size > files().file_size(file_index))
 				|| files().file_size(file_index) == 0)
 			{
-				std::string file_path = files().file_path(file_index, m_save_path);
-				std::string dir = parent_path(file_path);
-
-				if (dir != last_path)
-				{
-					last_path = dir;
-
-					create_directories(last_path, ec.ec);
-					if (ec.ec)
-					{
-						ec.file(file_index);
-						ec.operation = storage_error::mkdir;
-						break;
-					}
-				}
-				ec.ec.clear();
-				auto f = open_file(file_index, open_mode_t::write, ec);
+				auto f = open_file(file_index, open_mode_t::write | open_mode_t::truncate, ec);
 				if (ec)
 				{
 					ec.file(file_index);
@@ -495,8 +479,7 @@ namespace libtorrent {
 				return ret;
 			}
 
-			auto handle = open_file(file_index
-				, flags, ec);
+			auto handle = open_file(file_index, flags, ec);
 			if (ec) return -1;
 
 			int ret = 0;
@@ -614,11 +597,25 @@ namespace libtorrent {
 		});
 	}
 
+	// a wrapper around open_file_impl that, if it fails, makes sure the
+	// directories have been created and retries
 	aux::file_view default_storage::open_file(file_index_t const file
 		, std::uint32_t mode, storage_error& ec) const
 	{
+		if ((mode & open_mode_t::write) != 0
+			&& (mode & open_mode_t::truncate) == 0)
+		{
+			if (m_file_created.size() != files().num_files())
+				m_file_created.resize(files().num_files(), false);
+
+			// if we haven't created this file already, make sure to truncate it to
+			// its final size
+			mode |= (m_file_created[file] == false) ? open_mode_t::truncate : 0;
+		}
+
 		aux::file_view h = open_file_impl(file, mode, ec.ec);
-		if (((mode & file::rw_mask) != file::read_only)
+
+		if ((mode & open_mode_t::write)
 			&& ec.ec == boost::system::errc::no_such_file_or_directory)
 		{
 			// this means the directory the file is in doesn't exist.
@@ -643,6 +640,12 @@ namespace libtorrent {
 			ec.file(file);
 			ec.operation = storage_error::open;
 			return aux::file_view();
+		}
+		if (mode & open_mode_t::truncate)
+		{
+			// remember that we've truncated this file, so we don't have to do it
+			// again
+			m_file_created.set_bit(file);
 		}
 		return h;
 	}

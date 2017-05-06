@@ -330,8 +330,6 @@ namespace libtorrent {
 
 		m_stats_counters.inc_stats_counter(counters::num_running_disk_jobs, -1);
 
-//		if (ret == defer_handler) return;
-
 		j->ret = ret;
 
 		time_point now = clock_type::now();

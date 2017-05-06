@@ -63,7 +63,7 @@ namespace aux {
 	using byte = char;
 
 	enum open_mode_t : std::uint32_t
-	{ write = 1, no_cache = 2};
+	{ write = 1, no_cache = 2, truncate = 4};
 
 	inline int file_flags(std::uint32_t const mode)
 	{
@@ -79,7 +79,7 @@ namespace aux {
 			: m_fd(open(name.to_string().c_str(), file_flags(mode), 0755))
 		{
 			if (m_fd < 0) throw_ex<system_error>(error_code(errno, system_category()));
-			if (mode & open_mode_t::write)
+			if (mode & open_mode_t::truncate)
 			{
 				if (ftruncate(m_fd, static_cast<off_t>(size)) < 0) throw_ex<system_error>(error_code(errno, system_category()));
 			}
