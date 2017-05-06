@@ -33,6 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/config.hpp"
 #include "libtorrent/error_code.hpp"
 #include "libtorrent/aux_/storage_utils.hpp"
+#include "libtorrent/hasher.hpp"
 
 #include <ctime>
 #include <algorithm>
@@ -465,8 +466,7 @@ namespace libtorrent {
 				need_partfile();
 
 				error_code e;
-				peer_request map = files().map_file(file_index
-					, file_offset, 0);
+				peer_request map = files().map_file(file_index, file_offset, 0);
 				int const ret = m_part_file->readv(vec, map.piece, map.start, e);
 
 				if (e)
@@ -597,6 +597,82 @@ namespace libtorrent {
 		});
 	}
 
+	int default_storage::hashv(hasher& ph, std::size_t const len
+		, piece_index_t const piece, int const offset
+		, std::uint32_t const flags, storage_error& error)
+	{
+#ifdef TORRENT_SIMULATE_SLOW_READ
+		std::this_thread::sleep_for(seconds(1));
+#endif
+		char dummy = 0;
+		iovec_t dummy1 = {&dummy, len};
+		span<iovec_t> dummy2(&dummy1, 1);
+
+		return readwritev(files(), dummy2, piece, offset, error
+			, [this, flags, &ph](file_index_t const file_index
+				, std::int64_t const file_offset
+				, span<iovec_t const> vec, storage_error& ec)
+		{
+			size_t const read_size = bufs_size(vec);
+
+			if (files().pad_file_at(file_index))
+			{
+				std::array<char, 64> zeroes;
+				zeroes.fill(0);
+				for (int left = read_size; left > 0; left -= zeroes.size())
+				{
+					ph.update({zeroes.data(), std::min(zeroes.size(), std::size_t(left))});
+				}
+				return int(read_size);
+			}
+/*
+			if (file_index < m_file_priority.end_index()
+				&& m_file_priority[file_index] == 0)
+			{
+				need_partfile();
+
+#error make the partfile memory mapped as well (and remove flush_metadata() and storage tick)
+				error_code e;
+				peer_request map = files().map_file(file_index, file_offset, 0);
+				int const ret = m_part_file->readv(vec, map.piece, map.start, e);
+
+				if (e)
+				{
+					ec.ec = e;
+					ec.file(file_index);
+					ec.operation = storage_error::partfile_read;
+					return -1;
+				}
+				return ret;
+			}
+*/
+			auto handle = open_file(file_index, flags, ec);
+			if (ec) return -1;
+
+			int ret = 0;
+			error_code e;
+			span<aux::byte const volatile> file_range = handle.range();
+			if (file_range.size() > file_offset)
+			{
+				file_range = file_range.subspan(file_offset
+					, std::min(read_size, file_range.size() - std::size_t(file_offset)));
+				// TODO: error handling
+				ph.update({const_cast<char const*>(file_range.data()), file_range.size()});
+				ret += file_range.size();
+			}
+
+			if (ret <= 0)
+			{
+				ec.operation = storage_error::read;
+				ec.ec = boost::asio::error::eof;
+				ec.file(file_index);
+				return -1;
+			}
+
+			return ret;
+		});
+	}
+
 	// a wrapper around open_file_impl that, if it fails, makes sure the
 	// directories have been created and retries
 	aux::file_view default_storage::open_file(file_index_t const file
@@ -671,7 +747,7 @@ namespace libtorrent {
 			&& settings().get_int(settings_pack::disk_io_write_mode)
 			== settings_pack::disable_os_cache)
 		{
-			mode |= file::no_cache;
+			mode |= open_mode_t::no_cache;
 		}
 
 		try {

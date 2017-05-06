@@ -60,6 +60,7 @@ namespace aux {
 }
 
 	struct add_torrent_params;
+	class hasher;
 
 #ifndef TORRENT_NO_DEPRECATE
 	struct storage_interface;
@@ -112,6 +113,8 @@ namespace aux {
 			, piece_index_t piece, int offset, std::uint32_t flags, storage_error& ec);
 		int writev(span<iovec_t const> bufs
 			, piece_index_t piece, int offset, std::uint32_t flags, storage_error& ec);
+		int hashv(hasher& ph, std::size_t len, piece_index_t piece, int offset, std::uint32_t flags
+			, storage_error& ec);
 
 		// if the files in this storage are mapped, returns the mapped
 		// file_storage, otherwise returns the original file_storage object.

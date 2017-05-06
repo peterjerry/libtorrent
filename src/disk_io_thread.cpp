@@ -727,41 +727,33 @@ namespace libtorrent {
 		std::uint32_t const file_flags = file_flags_for_job(j
 			, m_settings.get_bool(settings_pack::coalesce_reads));
 
-		// TODO: don't allocate any space here, just hash directly from the memory
-		// mapped region
-		iovec_t iov = { m_buffer_pool.allocate_buffer("hashing")
-			, static_cast<std::size_t>(block_size) };
 		hasher h;
 		int ret = 0;
 		int offset = 0;
 		for (int i = 0; i < blocks_in_piece; ++i)
 		{
-			DLOG("do_hash: (uncached) reading (piece: %d block: %d)\n"
-				, int(j->piece), i);
+			DLOG("do_hash: reading (piece: %d block: %d)\n", int(j->piece), i);
 
 			time_point const start_time = clock_type::now();
 
-			iov = iov.first(aux::numeric_cast<std::size_t>(std::min(block_size, piece_size - offset)));
+			std::size_t const len = aux::numeric_cast<std::size_t>(
+				std::min(block_size, piece_size - offset));
 
 			std::unique_lock<std::mutex> l(m_store_buffer_mutex);
 			auto it = m_store_buffer.find({j->storage.get(), j->piece, offset});
 			if (it != m_store_buffer.end())
 			{
-				std::memcpy(iov.data(), it->second, iov.size());
-				ret = int(iov.size());
+				h.update({it->second, len});
+				ret = int(len);
 
 				l.unlock();
 			}
 			else
 			{
 				l.unlock();
-
-				ret = j->storage->readv(iov, j->piece
-					, offset, file_flags, j->error);
+				ret = j->storage->hashv(h, len, j->piece, offset, file_flags, j->error);
 				if (ret < 0) break;
 			}
-
-			iov = iov.first(std::size_t(ret));
 
 			if (!j->error.ec)
 			{
@@ -777,10 +769,7 @@ namespace libtorrent {
 			if (ret == 0) break;
 
 			offset += block_size;
-			h.update(iov);
 		}
-
-		m_buffer_pool.free_buffer(iov.data());
 
 		sha1_hash piece_hash = h.final();
 		std::memcpy(j->d.piece_hash, piece_hash.data(), 20);
